@@ -1,0 +1,10 @@
+{
+  "conditions": [
+    { "field": "name",        "operator": "eq", "value": "{{$random.name.firstName}}{{$random.name.lastName}}"        },
+    { "field": "password",    "operator": "eq", "value": "{{$random.alphanumeric(12)}}"    },
+    { "field": "email",       "operator": "eq", "value": "user-{{$random.integer(100000,999999)}}-{{$timestamp}}@example.com"       },
+    { "field": "phoneNumber", "operator": "eq", "value": "010{{$random.integer(0,100000000).toString().padStart(8,'0')}}" },
+    { "field": "role",        "operator": "eq", "value": "MEMBER"           }
+  ],
+  "pageInfo": { "currentPage": 1, "pageSize": 10 }
+}

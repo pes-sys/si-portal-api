@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.esstm.siportalapi.domain.member.repository.ProfileMapper">
+
+    <!-- 프로필 생성 -->
+    <insert id="insert" parameterType="com.esstm.siportalapi.domain.member.vo.ProfileVo" useGeneratedKeys="false">
+        INSERT INTO member_profile
+        (member_id, nickname, avatar_url, bio, preferences, created_at, updated_at)
+        VALUES
+            (#{memberId}, #{nickname}, #{avatarUrl}, #{bio}, #{preferences}, NOW(), NOW())
+    </insert>
+
+    <!-- memberId로 프로필 조회 -->
+    <select id="findById" resultType="com.esstm.siportalapi.domain.member.vo.ProfileVo" parameterType="int">
+        SELECT
+            member_id       AS memberId,
+            nickname,
+            avatar_url      AS avatarUrl,
+            bio,
+            preferences,
+            created_at      AS createdAt,
+            updated_at      AS updatedAt
+        FROM member_profile
+        WHERE member_id = #{memberId}
+          AND is_deleted = 0
+    </select>
+
+    <!-- 프로필 업데이트 -->
+    <update id="update" parameterType="com.esstm.siportalapi.domain.member.vo.ProfileVo">
+        UPDATE member_profile
+        <set>
+            nickname     = #{nickname},
+            avatar_url   = #{avatarUrl},
+            bio          = #{bio},
+            preferences  = #{preferences},
+            updated_at   = NOW()
+        </set>
+        WHERE member_id = #{memberId}
+        AND is_deleted = 0
+    </update>
+
+</mapper>

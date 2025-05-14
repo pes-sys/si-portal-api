@@ -1,0 +1,80 @@
+// build.gradle
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.2'
+    id 'io.spring.dependency-management' version '1.1.0'
+}
+
+group = 'com.esstm'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    lombokVersion          = '1.18.24'
+    mapstructVersion       = '1.5.5.Final'
+    mybatisStarterVersion  = '3.0.2'
+    mysqlConnectorVersion  = '8.0.33'
+    oauth2AuthServerVersion = '1.0.1'    // Spring Authorization Server 버전
+    nimbusJoseVersion       = '9.31'     // Nimbus JOSE JWT 버전
+
+}
+
+dependencies {
+    // === Spring Boot Starters ===
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+    // === MyBatis & MySQL ===
+    implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${mybatisStarterVersion}"
+    implementation "mysql:mysql-connector-java:${mysqlConnectorVersion}"
+
+    // === Lombok ===
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    // === MapStruct ===
+    implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+
+    // === Jakarta Persistence API ===
+    implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+
+    // === Testing & DevTools ===
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // Spring Authorization Server & Nimbus JOSE 의존성
+    implementation "org.springframework.security:spring-security-oauth2-authorization-server:${oauth2AuthServerVersion}"
+    implementation "com.nimbusds:nimbus-jose-jwt:${nimbusJoseVersion}"
+
+    // JWT (JJWT)
+    implementation "io.jsonwebtoken:jjwt-api:0.11.5"
+    runtimeOnly   "io.jsonwebtoken:jjwt-impl:0.11.5"
+    runtimeOnly   "io.jsonwebtoken:jjwt-jackson:0.11.5"  // Jackson 으로 클레임 직렬화
+
+
+}
+
+// JUnit5 플랫폼 사용
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// MapStruct 컴파일러 옵션 설정
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Amapstruct.defaultComponentModel=spring']
+}

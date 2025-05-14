@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.esstm.siportalapi.domain.member.repository.MemberMapper">
+
+    <!-- VO 매핑 -->
+    <resultMap id="MemberVoMap" type="com.esstm.siportalapi.domain.member.vo.MemberVo">
+        <id     column="member_id"        property="memberId"/>
+        <result column="name"             property="name"/>
+        <result column="password_hash"    property="passwordHash"/>
+        <result column="email"            property="email"/>
+        <result column="is_email_verified" property="emailVerified"/>
+        <result column="phone_number"     property="phoneNumber"/>
+        <result column="role"             property="role"/>
+        <result column="points"           property="points"/>
+        <result column="created_at"       property="createdAt"/>
+        <result column="updated_at"       property="updatedAt"/>
+        <result column="is_deleted"       property="deleted"/>
+        <result column="deleted_at"       property="deletedAt"/>
+    </resultMap>
+
+    <!-- 단건 조회 -->
+    <select id="findById" parameterType="Integer" resultMap="MemberVoMap">
+        SELECT *
+        FROM Members
+        WHERE member_id = #{id}
+          AND is_deleted = 0
+    </select>
+
+    <!-- 목록 조회 (동적 WHERE + 페이징) -->
+    <select id="search" parameterType="map" resultMap="MemberVoMap">
+        SELECT *
+        FROM Members
+        <where>
+            <if test="conditions != null">
+                <foreach collection="conditions" item="c" separator="AND">
+                    ${c.field} ${c.operator} '%' || #{c.value} || '%'
+                </foreach>
+            </if>
+            AND is_deleted = 0
+        </where>
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 전체 수 (페이징용) -->
+    <select id="count" parameterType="map" resultType="long">
+        SELECT COUNT(*)
+        FROM Members
+        <where>
+            <if test="conditions != null">
+                <foreach collection="conditions" item="c" separator="AND">
+                    ${c.field} ${c.operator} #{c.value}
+                </foreach>
+            </if>
+            AND is_deleted = 0
+        </where>
+    </select>
+
+    <!-- 시퀀스 흉내: 다음 ID 계산 -->
+    <select id="nextVal" resultType="long">
+        SELECT COALESCE(MAX(member_id),0) + 1 AS nextVal FROM Members
+    </select>
+
+    <!-- insert -->
+    <insert id="insert"
+            parameterType="com.esstm.siportalapi.domain.member.vo.MemberVo"
+            useGeneratedKeys="true"
+            keyProperty="memberId"
+            keyColumn="member_id">
+        INSERT INTO Members
+            (name, password_hash, email, phone_number, role, points, is_deleted)
+        VALUES
+            (#{name}, #{passwordHash}, #{email}, #{phoneNumber}, #{role}, #{points}, #{deleted})
+    </insert>
+
+    <!-- update -->
+    <update id="update" parameterType="com.esstm.siportalapi.domain.member.vo.MemberVo">
+        UPDATE Members
+        SET
+            name          = #{name},
+            phone_number  = #{phoneNumber},
+            role          = #{role},
+            updated_at    = NOW()
+        WHERE member_id = #{memberId}
+          AND is_deleted = 0
+    </update>
+
+    <!-- soft delete -->
+    <update id="softDelete" parameterType="Integer">
+        UPDATE Members
+        SET is_deleted = 1,
+            deleted_at = NOW()
+        WHERE member_id = #{id}
+    </update>
+
+
+    <select id="countByEmail" parameterType="string" resultType="long">
+        SELECT COUNT(*)
+        FROM Members
+        WHERE email = #{email}
+          AND is_deleted = 0
+    </select>
+
+</mapper>

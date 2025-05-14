@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/pessys?serverTimezone=Asia/Seoul&autoReconnect=true&useUnicode=true&characterEncoding=utf8
+    username: pessys
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      initialization-fail-timeout: 0
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+
+mybatis:
+  #mapper-locations: domain/mapper/**/*.xml
+  mapper-locations: classpath*:domain/mapper/**/*.xml
+  type-aliases-package: com.esstm.sipotalapi.domain
+
+logging:
+  level:
+    root: INFO
+    com.esstm: DEBUG
+    org.mybatis:
+
+jwt:
+  secret: ${JWT_SECRET:change_this_secret}
+  access:
+    expire: 3600000        # 1 hour
+  refresh:
+    expire: 604800000      # 7 days
+
+

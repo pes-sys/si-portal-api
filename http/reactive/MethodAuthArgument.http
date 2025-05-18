@@ -1,0 +1,33 @@
+### 1) 로그인 (성공 케이스)
+POST http://localhost:8080/api/auth/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "YourPassword123!"
+}
+
+###
+
+### 2) 로그인 (실패 케이스 – 잘못된 비밀번호)
+POST http://localhost:8080/api/auth/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "WrongPassword"
+}
+
+###
+
+### 3) 로그인 (실패 케이스 – 없는 계정)
+POST http://localhost:8080/api/auth/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com",
+  "password": "AnyPassword"
+}

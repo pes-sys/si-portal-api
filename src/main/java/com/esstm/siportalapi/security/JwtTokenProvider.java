@@ -2,16 +2,16 @@
 package com.esstm.siportalapi.security;
 
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * JWT 생성 및 검증 유틸리티
- */
 @Component
 public class JwtTokenProvider {
 
@@ -19,27 +19,66 @@ public class JwtTokenProvider {
     @Value("${jwt.access.expire}") private long accessExpireMs;
     @Value("${jwt.refresh.expire}") private long refreshExpireMs;
 
-    public String createAccessToken(String email, Collection<? extends GrantedAuthority> roles) {
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = Base64.getDecoder().decode(secretKey);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String createAccessToken(String subject,
+                                    Collection<? extends GrantedAuthority> roles) {
         Date now = new Date();
         return Jwts.builder()
-                .setSubject(email)
+                .setSubject(subject)
                 .claim("roles", roles.stream()
-                        .map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
+                        .map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.toList()))
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + accessExpireMs))
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String createRefreshToken(String email) {
+    public String createRefreshToken(String subject) {
         Date now = new Date();
         return Jwts.builder()
-                .setSubject(email)
+                .setSubject(subject)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + refreshExpireMs))
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 검증 메서드 생략…
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
+    }
+
+    public String getSubject(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+
+    @SuppressWarnings("unchecked")
+    public Collection<? extends GrantedAuthority> getRoles(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        List<String> roles = claims.get("roles", List.class);
+        return roles.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+    }
 }

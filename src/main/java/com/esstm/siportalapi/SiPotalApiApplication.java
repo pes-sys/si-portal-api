@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 @MapperScan(
         {
+
                 "com.esstm.siportalapi.domain.member.repository",
                 "com.esstm.siportalapi.domain.post.repository"
         }

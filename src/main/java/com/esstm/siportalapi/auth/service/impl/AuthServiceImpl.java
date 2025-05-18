@@ -3,18 +3,19 @@ package com.esstm.siportalapi.auth.service.impl;
 
 import com.esstm.siportalapi.auth.dto.LoginResponse;
 import com.esstm.siportalapi.auth.service.AuthService;
-import com.esstm.siportalapi.common.model.Status;
-import com.esstm.siportalapi.domain.member.model.Member;
+import com.esstm.siportalapi.domain.member.vo.MemberVo;
 import com.esstm.siportalapi.domain.member.repository.MemberMapper;
 import com.esstm.siportalapi.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.*;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-/**
- * 인증 서비스 구현체
- */
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -25,26 +26,23 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse login(String email, String password) {
-        // 1. 사용자 인증
-        UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(email, password);
-        try {
-            authenticationManager.authenticate(authToken);
-        } catch (BadCredentialsException ex) {
-            throw new AuthenticationCredentialsNotFoundException("이메일 또는 비밀번호가 올바르지 않습니다.");
+        // 1) 인증 시도
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, password)
+        );
+
+        // 2) 사용자 조회
+        MemberVo vo = memberMapper.findByEmail(email);
+        if (vo == null) {
+            throw new UsernameNotFoundException("사용자를 찾을 수 없습니다.");
         }
 
-        // 2. 유저 조회 및 상태 검사
-        Member member = memberMapper.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+        // 3) 권한(SimpleGrantedAuthority) 리스트 생성
+        List<GrantedAuthority> authorities =
+                List.of(new SimpleGrantedAuthority(vo.getRole()));
 
-        // 고객테이블에 Status 컬럼이 없음
-//        if (member.getStatus() != Status.ACTIVE) {
-//            throw new DisabledException("현재 사용 불가능한 계정입니다.");
-//        }
-
-        // 3. JWT 토큰 생성
-        String accessToken  = jwtTokenProvider.createAccessToken(email, member.getRoles());
+        // 4) JWT 토큰 생성
+        String accessToken  = jwtTokenProvider.createAccessToken(email, authorities);
         String refreshToken = jwtTokenProvider.createRefreshToken(email);
 
         return new LoginResponse(accessToken, refreshToken);
